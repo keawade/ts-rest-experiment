@@ -15,7 +15,7 @@ const MyErrorSchema = z.object({
 });
 export type MyError = z.infer<typeof MyErrorSchema>;
 
-export const contract = c.router({
+export const postsContract = c.router({
     createPost: {
         method: 'POST',
         path: '/post',
@@ -31,6 +31,9 @@ export const contract = c.router({
     getPost: {
         method: 'GET',
         path: '/post/:id',
+        pathParams: z.object({
+            id: z.string().uuid(),
+        }),
         responses: {
             200: PostSchema.nullable(),
             404: MyErrorSchema,

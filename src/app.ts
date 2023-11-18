@@ -2,10 +2,9 @@ import { default as express } from 'express';
 import { default as cors } from 'cors';
 import { default as bodyParser } from 'body-parser';
 import { createExpressEndpoints, initServer } from '@ts-rest/express';
-import { Post, contract } from './contract';
-import { randomUUID } from 'node:crypto';
 import { generateOpenApi } from '@ts-rest/open-api';
 import { default as swaggerUI } from 'swagger-ui-express';
+import { postsContract, postsRoutes } from './posts';
 
 const app = express();
 
@@ -15,10 +14,8 @@ app.use(bodyParser.json());
 
 const s = initServer();
 
-const posts = new Map<string, Post>();
-
 const openApiDocument = generateOpenApi(
-    contract,
+    postsContract,
     {
         info: {
             title: 'Posts API',
@@ -35,32 +32,10 @@ app.get('/docs/json', (_req, res) => {
 });
 app.use('/docs', swaggerUI.serve, swaggerUI.setup(openApiDocument));
 
-const router = s.router(contract, {
-    getPost: async ({ params: { id } }) => {
-        const post = posts.get(id);
-
-        if (!post) {
-            return {
-                status: 404,
-                body: { message: 'Post not found.' },
-            };
-        }
-
-        return { status: 200, body: post };
-    },
-    createPost: async ({ body }) => {
-        const post = {
-            ...body,
-            id: randomUUID(),
-        };
-
-        posts.set(post.id, post);
-        console.log(`Created post '${post.id}'.`);
-
-        return { status: 200, body: post };
-    },
-});
-
-createExpressEndpoints(contract, router, app);
+createExpressEndpoints(
+    postsContract,
+    s.router(postsContract, postsRoutes),
+    app,
+);
 
 export { app };
